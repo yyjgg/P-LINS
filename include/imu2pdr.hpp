@@ -34,7 +34,7 @@ public:
         position=pos;
         pdr_inited = 0;
         g = g_;
-        savefile.open("/home/liao/pplio/src/pplio/output/pdr_result.txt");
+        savefile.open("/home/yyj/catkin_ws/src/P-LINS/output/pdr_result.txt");
         if (!savefile.is_open())
         {
             printf("save imu file failed");
@@ -47,7 +47,7 @@ public:
     }
     double StepStride(double step_max, double step_min)
     {
-        double len = 0.425 * pow(abs(step_max - step_min), 0.25);
+        double len = 0.425 * pow(abs(step_max - step_min), 0.25);//对应论文中的K*1/4次方
         return len;
     }
     // 计算roll和pitch

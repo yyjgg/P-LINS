@@ -407,6 +407,7 @@ public:
         {
             imu_time = imu_buffer.front().header.stamp.toSec();
             eskf_tool->Predict(imu_buffer.front());
+            //用来作为pdr的观测数据
             Eigen::Vector3d gyro(
                 imu_buffer.front().angular_velocity.x,
                 imu_buffer.front().angular_velocity.y,
@@ -415,6 +416,7 @@ public:
                 imu_buffer.front().linear_acceleration.x,
                 imu_buffer.front().linear_acceleration.y,
                 imu_buffer.front().linear_acceleration.z);
+
             double cur_time = imu_buffer.front().header.stamp.toSec();
             imu_buffer.pop_front();
             // eskf_tool->ObserveNHC();
@@ -427,25 +429,28 @@ public:
                 Eigen::Vector3d tt(odom_temp.pose.pose.position.x, odom_temp.pose.pose.position.y, odom_temp.pose.pose.position.z);
                 Eigen::Quaterniond rr(odom_temp.pose.pose.orientation.w, odom_temp.pose.pose.orientation.x, odom_temp.pose.pose.orientation.y, odom_temp.pose.pose.orientation.z);
                 SE3 pos(rr.toRotationMatrix(), tt);
+
                 std::random_device rd;  // 随机数生成器设备
                 std::mt19937 gen(rd()); // 标准的mersenne_twister_engine
                 std::normal_distribution<double> dist(0, 0.1);
                 Vec3d vel(0, 0, 0);
-                if (curPos != last_pdr_pos)
+                if (abs(curPos-last_pdr_pos)>=1e-1)
                 {
                     vel << vel_in_b, 0, dist(gen);
-                    // eskf_tool->ObservePDRSpeed(vel);
+                    std::cout << "" << std::endl;
+                    eskf_tool->ObservePDRSpeed(vel);
                 }
                 else
                 {
-                    // eskf_tool->ObservePDRSpeed(vel);
+                    eskf_tool->ObservePDRSpeed(vel);
                     vel_in_b = 0;
-                    // std::cout << "zero v" << std::endl;
+                    std::cout << "zero v" << std::endl;
                 }
                 last_pdr_pos = curPos;
                 // eskf_tool->ObserveSE3(pos);
-                eskf_tool->ObservePDRSpeed(vel);
+                // eskf_tool->ObservePDRSpeed(vel);
             }
+
             PubIMUPath(imu_time, eskf_tool->GetNominalSE3().unit_quaternion(), eskf_tool->GetNominalSE3().translation());
             measures.imu_state.push_back(eskf_tool->GetNominalState());
         }
@@ -459,9 +464,13 @@ public:
         if (!ExtraFeature())
             return;
 
+
         // 更新当前匹配结果的初始位姿
         // 当前帧下采样
         DownsampleCurrentScan();
+
+
+
         // 对点云配准进行优化问题构建求解
         double t2 = omp_get_wtime();
         if (!Scan2MapOptimization())
@@ -540,7 +549,7 @@ public:
             ROS_ERROR("lidar loop back, clear buffer");
             lidar_buffer.clear();
         }
-        if (cur_lidar_time - last_timestamp_lidar < 0.15)
+        if (cur_lidar_time - last_timestamp_lidar < 0.08)//仅保留间隔≥0.15秒的帧，约6.67Hz，雷达数据发布为10hz，导致只能处理一半多一点的点云数据
             return;
         last_timestamp_lidar = cur_lidar_time;
         // extract info and feature cloud

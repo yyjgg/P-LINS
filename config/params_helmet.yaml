@@ -15,7 +15,7 @@ pplio:
 
   
   # Export settings
-  savePCD: false                              # https://github.com/TixiaoShan/LIO-SAM/issues/3
+  savePCD: true                              # https://github.com/TixiaoShan/LIO-SAM/issues/3
   savePCDDirectory: "/home/yyj/catkin_ws/src/P-LINS/SavePCD/"        # in your home folder, starts and ends with "/". Warning: the code deletes "LOAM" folder then recreates it. See "mapOptimization" for implementation
 
 
@@ -36,7 +36,7 @@ pplio:
   imu_ba: [0.0001, 0.0001,   0.0001]
   imu_bg: [0.0001,  0.0001 , 0.0001]
   imu_gravity: [0.0933875, -0.0235566,   -9.80953]
-  use_imu_init: false
+  use_imu_init: true
   # PDR Setting
   step_max: 0.5  #0.5
   step_min: -0.5
